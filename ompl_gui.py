@@ -14,13 +14,20 @@ points_opp=[]
 vrtx=[(200,200)]
 pub = rospy.Publisher('gui_params', point_SF)
 
+path_received=0
+
 
 def debug_path(msg):
-    global vrtx
+    global vrtx, path_received
+    # if(path_received==1):
+    #     return
+
     vrtx=[]
     for v in msg.point_array:
         vrtx.append(((int(v.x)),int(v.y)))
-    # print("received path points, size = ",len(vrtx))        
+        # print(v.x, v.y)
+    path_received=1    
+    print("received path points, size = ",len(vrtx))        
 
               
     # cv2.imshow("bots", img)

@@ -19,7 +19,7 @@ def debug_path(msg):
     global vrtx
     vrtx=[]
     for v in msg.point_array:
-        vrtx.append(((int(v.x)/10+300),int(v.y)/10+200))
+        vrtx.append(((int(v.x)/10),int(v.y)/10))
     print("received path points, size = ",len(vrtx))        
 
               
@@ -97,14 +97,14 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
 
     def display_bots(self, points_home, points_opp):
         global img, vrtx
-        self.scene.clear()
-        self.graphicsView.setScene(self.scene)
+        # self.scene.clear()
+        # self.graphicsView.setScene(self.scene)
         img = np.zeros((400,600,3), np.uint8)
         brush= QtGui.QBrush(QtCore.Qt.SolidPattern)
-        for point in points_home:
-            self.scene.addEllipse(point[0], point[1],self.obstacleRadius,self.obstacleRadius , self.mark_e, brush)
-        for point in points_opp:
-            self.scene.addEllipse(point[0], point[1],self.obstacleRadius,self.obstacleRadius , self.mark_s, brush) 
+        # for point in points_home:
+        self.scene.addEllipse(1, 1,self.obstacleRadius,self.obstacleRadius , self.mark_e, brush)
+        # for point in points_opp:
+        self.scene.addEllipse(600, 400,self.obstacleRadius,self.obstacleRadius , self.mark_s, brush) 
         # self.sendParams()
         self.draw_path(vrtx)  
 
@@ -132,7 +132,7 @@ w=MainWindow()
 def main():
     rospy.init_node('display', anonymous=True)
     rospy.Subscriber("/belief_state", BeliefState , Callback);
-    rospy.Subscriber("/path_planner", planner_path, debug_path)
+    rospy.Subscriber("/self_rrt_pair", planner_path, debug_path)
 
     w.show()
     app.exec_()
