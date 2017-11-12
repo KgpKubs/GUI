@@ -33,7 +33,7 @@ def debug_path(msg):
         vrtx.append(((int(v.x)),450-int(v.y)))
         # print(v.x, v.y)
     path_received=1    
-    # print("received path points, size = ",len(vrtx))        
+    print("received path points, size = ",len(vrtx))        
 
               
     # cv2.imshow("bots", img)
@@ -100,8 +100,8 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
         print("curr_vel ", curr_vel)
         speed = curr_vel[0]
         theta = curr_vel[1]
-        start_ = (vrtx[0][0],vrtx[0][1])
-        end_ = (vrtx[0][0]+VEL_UNIT*speed*cos(theta), vrtx[0][1]-VEL_UNIT*speed*sin(theta))
+        start_ = (points_home[0][0],points_home[0][1])
+        end_ = (points_home[0][0]+VEL_UNIT*speed*cos(theta), points_home[0][1]-VEL_UNIT*speed*sin(theta))
 
         self.scene.addLine(start_[0],start_[1], end_[0], end_[1])
         # qp.end()
@@ -142,6 +142,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
         self.scene.clear()
         self.graphicsView.setScene(self.scene)
         brush= QtGui.QBrush(QtCore.Qt.SolidPattern)
+        print("0th bot = ",points_home[0][0], points_home[0][1])
         for point in points_home:
             self.scene.addEllipse(point[0], point[1],self.obstacleRadius,self.obstacleRadius , self.mark_e, brush)
         for point in points_opp:
@@ -162,6 +163,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
         # print("no of points = ", len(vrtx))  
           
         path.moveTo(vrtx[0][0],vrtx[0][1])
+        print("0th position = ", vrtx[0][0], vrtx[0][1])
         max_x=0
         max_y=0
         min_x=999
