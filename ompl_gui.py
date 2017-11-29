@@ -10,13 +10,27 @@ from krssg_ssl_msgs.msg import planner_path
 from krssg_ssl_msgs.msg import point_SF
 from krssg_ssl_msgs.msg import gr_Commands
 
+sys.path.insert(0, '../plays_py/scripts/utils')
+from config import *
 
 points_home = []
 points_home_theta = []
 points_opp=[]
+FIELD_MAXX = HALF_FIELD_MAXX*4/3    #4000 in GrSim
+FIELD_MAXY = HALF_FIELD_MAXY*3/2    #3000 in GrSim
+GUI_X = 600
+GUI_Y = 400
+
+def BS_TO_GUI(x, y):
+    #GUI -> 600X400
+    x1 = (x + FIELD_MAXX)*GUI_X/(2*FIELD_MAXX)
+    y1 = (y + FIELD_MAXY)*GUI_Y/(2*FIELD_MAXY)
+
+    return [x1, y1]
+
 vrtx=[(200,200)]
 curr_vel = [10,0]
-VEL_UNIT = 5
+VEL_UNIT = 20
 BOT_ID = 0
 pub = rospy.Publisher('gui_params', point_SF)
 
@@ -25,43 +39,29 @@ path_received=0
 
 def debug_path(msg):
     global vrtx, path_received
-    # if(path_received==1):
-    #     return
-
     vrtx=[]
     for v in msg.point_array:
-        vrtx.append(((int(v.x)),450-int(v.y)))
-        # print(v.x, v.y)
-    path_received=1    
-    print("received path points, size = ",len(vrtx))        
-
-              
-    # cv2.imshow("bots", img)
-    # print(" in display bots here")
+        vrtx.append((BS_TO_GUI(v.x, v.y)))
+    path_received=1           
 
 def Callback_VelProfile(msg):
     global curr_vel
     msg = msg.robot_commands
     theta = float(points_home_theta[BOT_ID])
-    # print("theta = ",theta)
-    vel_theta = atan2(msg.velnormal, msg.veltangent) + theta
+    vel_theta = atan2(-1*msg.velnormal, msg.veltangent) + theta
     vel_mag = msg.velnormal*msg.velnormal + msg.veltangent*msg.veltangent
-    curr_vel = [vel_mag, vel_theta]
+    curr_vel = [vel_mag, -vel_theta]
 
-
-def Callback(msg):
-    # print(" in callback")
-    global points_home
-    global points_home_theta
+def Callback_BS(msg):
+    global points_home, points_home_theta, points_opp
     points_home = []
     points_home_theta = []
-    for i in msg.homePos:
-        points_home.append([(int((i.x)+4000)*13.0/160.0), 450-int((i.y+3000)*3/40.0)])
-        points_home_theta.append(i.theta)
-    global points_opp    
     points_opp=[]
+    for i in msg.homePos:
+        points_home.append(BS_TO_GUI(i.x, i.y))
+        points_home_theta.append(i.theta)  
     for i in msg.awayPos:
-        points_opp.append([(int((i.x)+4000)*13.0/160.0), 450-int((i.y+3000)*3.0/40.0)])
+        points_opp.append(BS_TO_GUI(i.x, i.y))
 
 
 class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
@@ -72,7 +72,6 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
         self.scene = QtGui.QGraphicsScene()
         self.image = None
         self.sendData.clicked.connect(self.sendParams)
-        #self.updatePath.clicked.connect(self.update_path)
         self.refresh.clicked.connect(self.hide_all)
         self.obstacleRadius = 10
         self.graphicsView.setFixedSize(650,450)
@@ -82,21 +81,15 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
         self.pen = QtGui.QPen(QtCore.Qt.green)
         self.mark_s = QtGui.QPen(QtCore.Qt.red)
         self.mark_e = QtGui.QPen(QtCore.Qt.blue)
-
-        # self.videoFrame=ImageWidget()
-        # self.setCentralWidget(self.videoFrame)
         self.timer=QtCore.QTimer(self)
         self.timer.timeout.connect(self.updateImage)
         self.timer.start(30)
-        # self.capture = cv2.VideoCapture(0)
+
     def hide_all(self):
-        # self.setCentralWidget(self)
         pass
 
     def show_vel_vector(self):
         global curr_vel
-    
-        # print("in show_vel_vector")
         print("curr_vel ", curr_vel)
         speed = curr_vel[0]
         theta = curr_vel[1]
@@ -104,11 +97,8 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
         end_ = (points_home[0][0]+VEL_UNIT*speed*cos(theta), points_home[0][1]-VEL_UNIT*speed*sin(theta))
 
         self.scene.addLine(start_[0],start_[1], end_[0], end_[1])
-        # qp.end()
-
 
     def sendParams(self):
-        print("in send_params")
         stepSize = float(self.stepSizeText.text())
         biasParam = float(self.biasParamText.text())
         maxIterations = float(self.maxIterationsText.text())
@@ -117,7 +107,6 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
         msg.s_y=points_home[1][1]
         msg.f_x=0
         msg.f_y=0
-        # print(" here step_size ",stepSize)
         msg.step_size=stepSize
         msg.bias_param=biasParam
         msg.max_iteration=maxIterations
@@ -128,11 +117,8 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
        
         self.display_bots(points_home, points_opp)
         self.show_vel_vector()
-        # self.show_vel_vector()
 
     def paintEvent(self,event):
-        # print(" in paint event")
-        # return
         qp=QtGui.QPainter()
         qp.begin(self)
         qp.end()  
@@ -142,7 +128,11 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
         self.scene.clear()
         self.graphicsView.setScene(self.scene)
         brush= QtGui.QBrush(QtCore.Qt.SolidPattern)
-        print("0th bot = ",points_home[0][0], points_home[0][1])
+       
+        if(len(points_home)==0):
+            print("SIZE OF POS_HOME = 0 ")
+            return
+
         for point in points_home:
             self.scene.addEllipse(point[0], point[1],self.obstacleRadius,self.obstacleRadius , self.mark_e, brush)
         for point in points_opp:
@@ -150,44 +140,24 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
         self.draw_path(vrtx)  
 
     def draw_path(self, vrtx):
-    # print("in draw_path")
         path = QtGui.QPainterPath()
-        # path_points = []
-        # with open("../../../path.dat") as f:
-        #     content = f.readlines()
-        #     content = content[0].strip()
-        #     print(content)
-        #     path_points.append((int(float(content[0])/800.0*600), int(float(content[1])/500.0*400)))
-
-        # vrtx = path_points
-        # print("no of points = ", len(vrtx))  
           
         path.moveTo(vrtx[0][0],vrtx[0][1])
-        print("0th position = ", vrtx[0][0], vrtx[0][1])
-        max_x=0
-        max_y=0
-        min_x=999
-        min_y=999
-        for i in vrtx[1::5]:
+        size_ = len(vrtx)
+        division = int(size_/100)
+        if(division<1):
+            division = 1
+        for i in vrtx[1::division]:
             path.lineTo(i[0],i[1])
-            if(i[0]>max_x):
-                max_x=i[0]
-            if(i[0]<min_x):
-                min_x=i[0]
-
-            if(i[1]>max_y):
-                max_y=i[1] 
-            if(i[1]<min_y):
-                min_y=i[1]       
-        
+           
+        path.lineTo(vrtx[size_-1][0], vrtx[size_-1][1])   
         self.scene.addPath(path)
-        # print(" Path added to scene now ",max_x, max_y," min = ",min_x, min_y)
 
 app=QtGui.QApplication(sys.argv)
 w=MainWindow()
 def main():
     rospy.init_node('display', anonymous=True)
-    rospy.Subscriber("/belief_state", BeliefState , Callback);
+    rospy.Subscriber("/belief_state", BeliefState , Callback_BS);
     rospy.Subscriber("/grsim_data", gr_Commands , Callback_VelProfile);
     rospy.Subscriber("/path_planner_ompl", planner_path, debug_path)
 
