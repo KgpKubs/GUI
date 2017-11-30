@@ -30,7 +30,7 @@ def BS_TO_GUI(x, y):
 
 vrtx=[(200,200)]
 curr_vel = [10,0]
-VEL_UNIT = 20
+VEL_UNIT = 5
 BOT_ID = 0
 pub = rospy.Publisher('gui_params', point_SF)
 
@@ -50,7 +50,7 @@ def Callback_VelProfile(msg):
     theta = float(points_home_theta[BOT_ID])
     vel_theta = atan2(-1*msg.velnormal, msg.veltangent) + theta
     vel_mag = msg.velnormal*msg.velnormal + msg.veltangent*msg.veltangent
-    curr_vel = [vel_mag, -vel_theta]
+    curr_vel = [vel_mag, vel_theta]
 
 def Callback_BS(msg):
     global points_home, points_home_theta, points_opp
@@ -158,8 +158,8 @@ w=MainWindow()
 def main():
     rospy.init_node('display', anonymous=True)
     rospy.Subscriber("/belief_state", BeliefState , Callback_BS);
-    rospy.Subscriber("/grsim_data", gr_Commands , Callback_VelProfile);
-    rospy.Subscriber("/path_planner_ompl", planner_path, debug_path)
+    rospy.Subscriber("/grsim_data1", gr_Commands , Callback_VelProfile);
+    rospy.Subscriber("/vel_profile_to_gui", planner_path, debug_path)
 
     w.show()
     app.exec_()
