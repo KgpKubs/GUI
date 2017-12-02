@@ -36,6 +36,7 @@ def debug_path(msg):
         flag = 0
     if(flag==1):
         return
+    print("Here")
     global vrtx, path_received
     vrtx=[]
     for v in msg.point_array:
@@ -173,7 +174,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
 app=QtGui.QApplication(sys.argv)
 w=MainWindow()
 def main():
-    rospy.init_node('display', anonymous=True)
+    rospy.init_node('display', anonymous=False)
     rospy.Subscriber("/belief_state", BeliefState , Callback);
     rospy.Subscriber("/grsim_data", gr_Commands , Callback_VelProfile);
     rospy.Subscriber("/path_planner_ompl", planner_path, debug_path)
