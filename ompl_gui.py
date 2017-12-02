@@ -32,17 +32,18 @@ def debug_path(msg):
     global flag
     global expectedPos
     global homeBotPos
-    if sqrt((expectedPos[0] - homeBotPos[0])**2 + (expectedPos[1] - homeBotPos[1])**2) > 500:
-        flag = 0
-    if(flag==1):
-        return
+    # if sqrt((expectedPos[0] - homeBotPos[0])**2 + (expectedPos[1] - homeBotPos[1])**2) > 500:
+    #     print("Changing Flag   ")
+    #     flag = 0
+    # if(flag==1):
+    #     return
     print("Here")
     global vrtx, path_received
     vrtx=[]
     for v in msg.point_array:
         vrtx.append(((int(v.x)),450-int(v.y)))
     path_received=1
-    flag=1
+    # flag=1
 
 def Callback_VelProfile(msg):
     print("OMPL subscribed with grsimData")
