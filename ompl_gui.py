@@ -38,6 +38,7 @@ path_received=0
 
 
 def debug_path(msg):
+    print("New Path Received")
     global vrtx, path_received
     vrtx=[]
     for v in msg.point_array:
@@ -90,7 +91,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
 
     def show_vel_vector(self):
         global curr_vel
-        print("curr_vel ", curr_vel)
+        # print("curr_vel ", curr_vel)
         speed = curr_vel[0]
         theta = curr_vel[1]
         start_ = (points_home[0][0],points_home[0][1])
@@ -116,7 +117,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
     def updateImage(self):
        
         self.display_bots(points_home, points_opp)
-        self.show_vel_vector()
+        # self.show_vel_vector()
 
     def paintEvent(self,event):
         qp=QtGui.QPainter()
@@ -156,10 +157,10 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
 app=QtGui.QApplication(sys.argv)
 w=MainWindow()
 def main():
-    rospy.init_node('display', anonymous=True)
+    rospy.init_node('display', anonymous=False)
     rospy.Subscriber("/belief_state", BeliefState , Callback_BS);
-    rospy.Subscriber("/grsim_data1", gr_Commands , Callback_VelProfile);
-    rospy.Subscriber("/vel_profile_to_gui", planner_path, debug_path)
+    rospy.Subscriber("/grsim_data", gr_Commands , Callback_VelProfile);
+    rospy.Subscriber("/path_planner_ompl", planner_path, debug_path)
 
     w.show()
     app.exec_()
