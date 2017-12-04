@@ -21,10 +21,11 @@ FIELD_MAXY = HALF_FIELD_MAXY*3/2    #3000 in GrSim
 GUI_X = 600
 GUI_Y = 400
 
+
 def BS_TO_GUI(x, y):
     #GUI -> 600X400
     x1 = (x + FIELD_MAXX)*GUI_X/(2*FIELD_MAXX)
-    y1 = (y + FIELD_MAXY)*GUI_Y/(2*FIELD_MAXY)
+    y1 = -(y - FIELD_MAXY)*GUI_Y/(2*FIELD_MAXY)
 
     return [x1, y1]
 
@@ -38,7 +39,7 @@ path_received=0
 
 
 def debug_path(msg):
-    print("New Path Received")
+    # print("New Path Received")
     global vrtx, path_received
     vrtx=[]
     for v in msg.point_array:
