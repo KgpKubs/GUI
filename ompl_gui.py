@@ -39,7 +39,7 @@ path_received=0
 
 
 def debug_path(msg):
-    # print("New Path Received")
+    print("Path Recieved")
     global vrtx, path_received
     vrtx=[]
     for v in msg.point_array:
