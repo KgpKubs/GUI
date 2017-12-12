@@ -9,7 +9,11 @@ from krssg_ssl_msgs.msg import point_2d
 from krssg_ssl_msgs.msg import planner_path
 from krssg_ssl_msgs.msg import point_SF
 from krssg_ssl_msgs.msg import gr_Commands
-
+MAJOR_AXIS_FACTOR = 10
+MINOR_AXIS_FACTOR = 2
+PI = 3.141592653589793
+radius  = 10
+VEL_ANGLE = 0
 sys.path.insert(0, '../plays_py/scripts/utils')
 from config import *
 
@@ -20,12 +24,13 @@ FIELD_MAXX = HALF_FIELD_MAXX*4/3    #4000 in GrSim
 FIELD_MAXY = HALF_FIELD_MAXY*3/2    #3000 in GrSim
 GUI_X = 600
 GUI_Y = 400
-
+vel_theta=0
+vel_mag=0
 
 def BS_TO_GUI(x, y):
     #GUI -> 600X400
     x1 = (x + FIELD_MAXX)*GUI_X/(2*FIELD_MAXX)
-    y1 = -(y - FIELD_MAXY)*GUI_Y/(2*FIELD_MAXY)
+    y1 = (y + FIELD_MAXY)*GUI_Y/(2*FIELD_MAXY)
 
     return [x1, y1]
 
@@ -39,20 +44,28 @@ path_received=0
 
 
 def debug_path(msg):
-    print("Path Recieved")
-    global vrtx, path_received
+    print("New Path Received")
+    global vrtx, path_received, VEL_ANGLE, vel_theta, vel_mag
     vrtx=[]
     for v in msg.point_array:
         vrtx.append((BS_TO_GUI(v.x, v.y)))
-    path_received=1           
+    path_received=1    
+    if(vel_mag<0.01):     
+        VEL_ANGLE = atan2(vrtx[2][1]-vrtx[0][1], vrtx[2][0]-vrtx[0][0])
+    else:
+        VEL_ANGLE = vel_theta      
 
 def Callback_VelProfile(msg):
-    global curr_vel
+    global curr_vel, vel_mag, vel_theta
     msg = msg.robot_commands
     theta = float(points_home_theta[BOT_ID])
     vel_theta = atan2(-1*msg.velnormal, msg.veltangent) + theta
     vel_mag = msg.velnormal*msg.velnormal + msg.veltangent*msg.veltangent
     curr_vel = [vel_mag, vel_theta]
+    if(vel_mag<0.01):
+        VEL_ANGLE = 0    
+    else:
+        VEL_ANGLE = vel_theta    
 
 def Callback_BS(msg):
     global points_home, points_home_theta, points_opp
@@ -126,6 +139,9 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
         qp.end()  
 
     def display_bots(self, points_home, points_opp):
+        transform = QtGui.QTransform()
+       
+
         global vrtx
         self.scene.clear()
         self.graphicsView.setScene(self.scene)
@@ -139,11 +155,23 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
             self.scene.addEllipse(point[0], point[1],self.obstacleRadius,self.obstacleRadius , self.mark_e, brush)
         for point in points_opp:
             self.scene.addEllipse(point[0], point[1],self.obstacleRadius,self.obstacleRadius , self.mark_s, brush) 
+        # if(len(points_home)!=0):
+        #     cx = points_home[0][0] + MAJOR_AXIS_FACTOR*radius*cos(VEL_ANGLE)/2
+        #     cy = points_home[0][1] + MINOR_AXIS_FACTOR*radius*sin(VEL_ANGLE)/2
+        #     ellipse = QtGui.QGraphicsEllipseItem(0,0,MAJOR_AXIS_FACTOR*radius,MINOR_AXIS_FACTOR*radius)
+        #     ellipse.setPen(self.pen)
+        #     ellipse.setPos(cx,cy)
+        #     transform.rotate(VEL_ANGLE*180/PI)  # rotate the negative of the angle desired
+        #     transform.translate(-MAJOR_AXIS_FACTOR*radius/4, -MINOR_AXIS_FACTOR*radius/4)
+        #     # print(cx, cy)
+        #     ellipse.setTransform(transform)
+        #     self.scene.addItem(ellipse)
+        #     print("-------------VEL_ANGLE = ",VEL_ANGLE)
         self.draw_path(vrtx)  
 
     def draw_path(self, vrtx):
+        
         path = QtGui.QPainterPath()
-          
         path.moveTo(vrtx[0][0],vrtx[0][1])
         size_ = len(vrtx)
         division = int(size_/100)
