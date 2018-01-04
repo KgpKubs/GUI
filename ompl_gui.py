@@ -108,6 +108,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
         self.timer=QtCore.QTimer(self)
         self.timer.timeout.connect(self.updateImage)
         self.timer.start(30)
+        self.t1 = None
 
     
     def goToBall(self):
@@ -116,7 +117,9 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
         msg=point_SF()
         msg.bot_id = int(self.textBotId.text())
         pub.publish(msg)
-        self.t1 = multiprocessing.Process(target=self.path_listener)
+        if(not self.t1==None):
+            self.t1.end()
+        self.t1 = multiprocessing.Process(target=self.goToPoint)
         self.t1.start()
         # self.t1.terminate()
         #start_new_thread(self.goToPoint,())
@@ -140,11 +143,12 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow, QtGui.QWidget):
     def path_listener(self):
         try:
             os.system('rosrun ompl_planner listener_ompl')
-        except:
+        except Exception as e:
+            print("Error: ", e)
             pass
     def goToPoint(self):
         try:
-            os.system('python ../behavior-fsm/test_GoToPoint.py')
+            os.system('cd .. && python test_GoToPoint.py')
         except:
             pass
     
