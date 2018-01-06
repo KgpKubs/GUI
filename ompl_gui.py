@@ -18,9 +18,7 @@ MINOR_AXIS_FACTOR = 2
 PI = 3.141592653589793
 radius  = 10
 VEL_ANGLE = 0
-sys.path.insert(0, '../plays_py/scripts/utils')
-sys.path.append('../velocity_profiling/src')
-from config import *
+from utils.config import *
 
 points_home = []
 points_home_theta = []
